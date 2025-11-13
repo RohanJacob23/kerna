@@ -1,5 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
-import { createError } from "h3";
+import { eq } from "drizzle-orm";
+import { createError, type H3Event, type EventHandlerRequest } from "h3";
+import { db } from "~~/db";
+import { user } from "~~/db/schema";
+
+const DAILY_LIMIT = 20; // Set your limit
 
 /**
  * This is our shared function that calls the AI.
@@ -7,7 +12,10 @@ import { createError } from "h3";
  * @param text The text extracted from either the textarea or the PDF.
  * @returns The AI's generated Markdown response.
  */
-export default async function (text: string): Promise<string> {
+export default async function (
+	text: string,
+	event: H3Event<EventHandlerRequest>
+): Promise<string> {
 	// 1. Get the secret API key
 	const { googleAiKey } = useRuntimeConfig();
 	if (!googleAiKey) {
@@ -16,6 +24,57 @@ export default async function (text: string): Promise<string> {
 			statusMessage: "Server is not configured. Missing API key.",
 		});
 	}
+
+	const session = await auth.api.getSession({ headers: event.headers });
+	if (!session) {
+		throw createError({
+			statusCode: 401,
+			statusMessage: "You must be logged in.",
+		});
+	}
+
+	const userId = session.user.id;
+
+	const userRecord = await db.query.user.findFirst({
+		where: eq(user.id, userId),
+		columns: { requestsToday: true, lastRequestAt: true },
+	});
+
+	if (!userRecord) {
+		throw createError({
+			statusCode: 404,
+			statusMessage: "User not found.",
+		});
+	}
+
+	const today = new Date().setHours(0, 0, 0, 0);
+	const lastRequestDate = userRecord.lastRequestAt
+		? new Date(userRecord.lastRequestAt).setHours(0, 0, 0, 0)
+		: null;
+
+	let currentRequests = userRecord.requestsToday;
+
+	// 2. Reset count if it's a new day
+	if (lastRequestDate && lastRequestDate !== today) {
+		currentRequests = 0;
+	}
+
+	// 3. Check the limit
+	if (currentRequests !== null && currentRequests >= DAILY_LIMIT) {
+		throw createError({
+			statusCode: 429, // Too Many Requests
+			statusMessage: "You have exceeded your daily usage limit.",
+		});
+	}
+
+	// 4. Update the user's count in the DB (do this *before* the AI call)
+	await db
+		.update(user)
+		.set({
+			requestsToday: currentRequests ? currentRequests + 1 : 1,
+			lastRequestAt: new Date(),
+		})
+		.where(eq(user.id, userId));
 
 	// 2. Initialize the Google AI client
 	const genAI = new GoogleGenAI({ apiKey: googleAiKey });

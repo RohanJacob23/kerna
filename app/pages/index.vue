@@ -37,8 +37,6 @@ const handleSubmit = async ({ data }: FormSubmitEvent<FormSchema>) => {
 			body: data,
 		});
 
-		await new Promise((res) => setTimeout(res, 2000));
-
 		if (!res.aiResponse) {
 			error.value = "Error generating study guide. Please try again.";
 			toast.error("Error generating study guide. Please try again.", {
@@ -56,8 +54,6 @@ const handleSubmit = async ({ data }: FormSubmitEvent<FormSchema>) => {
 			method: "POST",
 			body: formData,
 		});
-
-		await new Promise((res) => setTimeout(res, 2000));
 
 		if (!res.aiResponse) {
 			error.value = "Error generating study guide. Please try again.";

@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
 
 	const { text } = result.data;
 
-	const aiResponse = await generateStudyGuide(text);
+	const aiResponse = await generateStudyGuide(text, event);
 
 	return { aiResponse };
 });

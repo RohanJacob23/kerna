@@ -15,8 +15,10 @@ useSeoMeta({
 </script>
 
 <template>
-	<NuxtLayout>
-		<NuxtPage />
-		<AppSonner />
-	</NuxtLayout>
+	<UApp>
+		<NuxtLayout>
+			<NuxtPage />
+			<AppSonner />
+		</NuxtLayout>
+	</UApp>
 </template>
