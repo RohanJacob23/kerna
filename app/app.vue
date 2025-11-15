@@ -12,6 +12,9 @@ useSeoMeta({
 	ogImage: "https://example.com/image.png",
 	twitterCard: "summary_large_image",
 });
+
+const auth = useAuth();
+callOnce("auth-init", auth.fetchSession);
 </script>
 
 <template>

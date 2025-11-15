@@ -17,21 +17,12 @@ const items: NavigationMenuItem[] = [
 <template>
 	<section>
 		<UHeader title="KERNA">
-			<UNavigationMenu :items="items" color="primary" />
-
-			<template #right>
-				<div class="flex items-center gap-2">
-					<UButton color="neutral" variant="outline" to="/sign-up"
-						>Sign Up</UButton
-					>
-					<UButton to="/login">Login</UButton>
-				</div>
-			</template>
+			<UNavigationMenu :items="items" />
+			<template #right> <AuthButton /> </template>
 			<template #body>
 				<UNavigationMenu :items="items" orientation="vertical" />
 			</template>
 		</UHeader>
-
 		<UMain>
 			<slot />
 		</UMain>

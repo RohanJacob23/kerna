@@ -2,9 +2,19 @@ import { GoogleGenAI } from "@google/genai";
 import { eq } from "drizzle-orm";
 import { createError, type H3Event, type EventHandlerRequest } from "h3";
 import { db } from "~~/db";
-import { user } from "~~/db/schema";
+import { generations, user } from "~~/db/schema";
 
-const DAILY_LIMIT = 20; // Set your limit
+const DAILY_LIMIT = 10; // Set your limit
+
+async function hasProAccess(event: H3Event): Promise<boolean> {
+	const benefits = await auth.api.benefits({
+		headers: event.headers,
+	});
+
+	// This will be > 0 if they are on a trial or any paid plan
+	// that grants the "Pro Access" benefit.
+	return benefits.result.items.length > 0;
+}
 
 /**
  * This is our shared function that calls the AI.
@@ -14,6 +24,7 @@ const DAILY_LIMIT = 20; // Set your limit
  */
 export default async function (
 	text: string,
+	title: string,
 	event: H3Event<EventHandlerRequest>
 ): Promise<string> {
 	// 1. Get the secret API key
@@ -33,48 +44,51 @@ export default async function (
 		});
 	}
 
+	const isPro = await hasProAccess(event);
 	const userId = session.user.id;
 
-	const userRecord = await db.query.user.findFirst({
-		where: eq(user.id, userId),
-		columns: { requestsToday: true, lastRequestAt: true },
-	});
-
-	if (!userRecord) {
-		throw createError({
-			statusCode: 404,
-			statusMessage: "User not found.",
+	if (!isPro) {
+		const userRecord = await db.query.user.findFirst({
+			where: eq(user.id, userId),
+			columns: { requestsToday: true, lastRequestAt: true },
 		});
+
+		if (!userRecord) {
+			throw createError({
+				statusCode: 404,
+				statusMessage: "User not found.",
+			});
+		}
+
+		const today = new Date().setHours(0, 0, 0, 0);
+		const lastRequestDate = userRecord.lastRequestAt
+			? new Date(userRecord.lastRequestAt).setHours(0, 0, 0, 0)
+			: null;
+
+		let currentRequests = userRecord.requestsToday;
+
+		// 2. Reset count if it's a new day
+		if (lastRequestDate && lastRequestDate !== today) {
+			currentRequests = 0;
+		}
+
+		// 3. Check the limit
+		if (currentRequests !== null && currentRequests >= DAILY_LIMIT) {
+			throw createError({
+				statusCode: 429, // Too Many Requests
+				statusMessage: "You have exceeded your daily usage limit.",
+			});
+		}
+
+		// 4. Update the user's count in the DB (do this *before* the AI call)
+		await db
+			.update(user)
+			.set({
+				requestsToday: currentRequests ? currentRequests + 1 : 1,
+				lastRequestAt: new Date(),
+			})
+			.where(eq(user.id, userId));
 	}
-
-	const today = new Date().setHours(0, 0, 0, 0);
-	const lastRequestDate = userRecord.lastRequestAt
-		? new Date(userRecord.lastRequestAt).setHours(0, 0, 0, 0)
-		: null;
-
-	let currentRequests = userRecord.requestsToday;
-
-	// 2. Reset count if it's a new day
-	if (lastRequestDate && lastRequestDate !== today) {
-		currentRequests = 0;
-	}
-
-	// 3. Check the limit
-	if (currentRequests !== null && currentRequests >= DAILY_LIMIT) {
-		throw createError({
-			statusCode: 429, // Too Many Requests
-			statusMessage: "You have exceeded your daily usage limit.",
-		});
-	}
-
-	// 4. Update the user's count in the DB (do this *before* the AI call)
-	await db
-		.update(user)
-		.set({
-			requestsToday: currentRequests ? currentRequests + 1 : 1,
-			lastRequestAt: new Date(),
-		})
-		.where(eq(user.id, userId));
 
 	// 2. Initialize the Google AI client
 	const genAI = new GoogleGenAI({ apiKey: googleAiKey });
@@ -120,6 +134,13 @@ export default async function (
 				statusMessage: "Error generating response from AI.",
 			});
 		}
+
+		await db.insert(generations).values({
+			userId,
+			title, // Use the title passed from the endpoint
+			aiResponse: response.text, // Save the raw markdown
+			// `id` and `createdAt` will use their default values
+		});
 
 		return response.text;
 	} catch (e) {

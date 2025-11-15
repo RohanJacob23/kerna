@@ -32,15 +32,17 @@ const auth = useAuth();
 
 const handleSubmit = async ({ data }: FormSubmitEvent<Schema>) => {
 	loading.value = true;
-	toast.promise(() => auth.signIn.email(data), {
-		loading: "Signing up",
-		success: async () => {
+	const loadingToast = toast.loading("Logging in...");
+
+	await auth.signIn.email(data, {
+		async onSuccess() {
 			await auth.fetchSession();
-			await navigateTo("/");
-			return "Signed up";
+			toast.success("Logged in successfully", { id: loadingToast });
+			await navigateTo("/app");
+			loading.value = false;
 		},
-		error: "Sign up failed",
-		finally: () => {
+		onError(context) {
+			toast.error(context.error.message, { id: loadingToast });
 			loading.value = false;
 		},
 	});

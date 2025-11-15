@@ -1,134 +1,209 @@
 <script setup lang="ts">
-import type { FormSubmitEvent } from "@nuxt/ui";
-import z from "zod";
+import type { ButtonProps, PricingPlanProps } from "@nuxt/ui";
 
-const formSchema = z.object({
-	text: z.string().optional(),
-	file: z.file().mime("application/pdf").optional(),
-});
-
-type FormSchema = z.infer<typeof formSchema>;
-
-// --- State ---
-// Holds the text from the <textarea>
-const formState = reactive<Partial<FormSchema>>({ text: "", file: undefined });
-// Stores the final AI-generated response (as Markdown)
-const result = ref("");
-// Tracks the loading state for the API call
 const loading = ref(false);
-// Holds any error messages
-const error = ref<string | null>(null);
 
-const { $toast: toast } = useNuxtApp();
+const links = ref<ButtonProps[]>([
+	{
+		label: "Get started",
+	},
+	{
+		label: "Learn more",
+		variant: "subtle",
+		trailingIcon: "i-lucide-arrow-right",
+	},
+]);
 
-// --- Logic ---
-/**
- * This function is called when the user submits the form.
- * It sends the `textInput` to our backend API endpoint.
- */
-const handleSubmit = async ({ data }: FormSubmitEvent<FormSchema>) => {
-	result.value = "";
+const handleUpgrade = async () => {
 	loading.value = true;
-	const loadingToast = toast.loading("Generating study guide...");
-
-	if (data.text) {
-		const res = await $fetch("/api/generate", {
-			method: "POST",
-			body: data,
-		});
-
-		if (!res.aiResponse) {
-			error.value = "Error generating study guide. Please try again.";
-			toast.error("Error generating study guide. Please try again.", {
-				id: loadingToast,
-			});
-			return;
-		}
-
-		result.value = res.aiResponse;
-	} else if (data.file) {
-		const formData = new FormData();
-		formData.append("file", data.file);
-
-		const res = await $fetch("/api/upload", {
-			method: "POST",
-			body: formData,
-		});
-
-		if (!res.aiResponse) {
-			error.value = "Error generating study guide. Please try again.";
-			toast.error("Error generating study guide. Please try again.", {
-				id: loadingToast,
-			});
-			return;
-		}
-
-		result.value = res.aiResponse;
-	}
-
-	toast.success("Study guide generated successfully!", { id: loadingToast });
-	loading.value = false;
+	await new Promise((resolve) => setTimeout(resolve, 2000));
+	await upgrade().finally(() => {
+		loading.value = false;
+	});
 };
+
+const plans = computed<PricingPlanProps[]>(() => [
+	{
+		title: "Free",
+		description: "Tailored for indie hackers.",
+		price: "$0",
+		billingCycle: "/month",
+		billingPeriod: "billed monthly",
+		features: [
+			"20 AI Generations per Day",
+			"PDF & Text Submissions",
+			"Summary & Key Term Generation",
+			"Practice Quiz Generation",
+		],
+		button: {
+			label: "Current",
+			loading: loading.value,
+			onClick: handleUpgrade,
+		},
+	},
+	{
+		title: "Pro Plan",
+		description: "Best suited for small teams.",
+		badge: "Save 20%",
+		price: "$50",
+		billingCycle: "/yearly",
+		billingPeriod: "billed yearly",
+		features: [
+			"Everything in Free, plus:",
+			"Unlimited AI Generations",
+			"Full Generation History",
+			"Priority Support",
+		],
+		button: {
+			label: "Buy now",
+			loading: loading.value,
+			onClick: handleUpgrade,
+		},
+		scale: true,
+	},
+	{
+		title: "Pro Plan",
+		description: "Best suited for small teams.",
+		price: "$5",
+		billingCycle: "/month",
+		billingPeriod: "billed monthly",
+		features: [
+			"Everything in Free, plus:",
+			"Unlimited AI Generations",
+			"Full Generation History",
+			"Priority Support",
+		],
+		button: {
+			label: "Buy now",
+			loading: loading.value,
+			onClick: handleUpgrade,
+		},
+	},
+]);
 </script>
 
 <template>
-	<UPageHero
-		title="Kerna"
-		description="Turn any text into a summary, key terms, and a practice quiz.">
-		<div class="space-y-4">
-			<UForm
-				class="space-y-4"
-				:state="formState"
-				:schema="formSchema"
-				@submit="handleSubmit">
-				<UFormField label="Option 1: Paste Your Text" name="text">
-					<UTextarea
-						v-model="formState.text"
-						class="w-full"
-						placeholder="Paste your textbook chapter, lecture notes, or any article here..."
-						:disabled="loading"
-						autoresize />
-				</UFormField>
-
-				<USeparator label="OR" />
-
-				<UFormField label="Option 2: Upload a PDF" name="file">
-					<UFileUpload
-						id="file-input"
-						v-model="formState.file"
-						variant="button"
-						size="xl"
-						:disabled="loading"
-						accept=".pdf" />
-				</UFormField>
-
+	<section>
+		<UPageHero
+			title="Master Any Topic in Seconds"
+			description="Stop reading endless textbook chapters. Kerna uses AI to turn your PDFs and notes into concise summaries, key terms, and practice quizzes instantly."
+			orientation="horizontal"
+			:ui="{ container: 'min-h-[calc(100vh-var(--ui-header-height))]' }">
+			<template #links>
 				<UButton
-					type="submit"
-					label="Generate Study Guide"
-					:loading="loading"
+					to="/app"
+					label="Get Started for Free"
+					icon="i-heroicons-rocket-launch"
+					size="xl" />
+				<UButton
+					to="/login"
+					label="Log In"
+					color="neutral"
+					variant="ghost"
 					size="xl"
-					icon="lucide:sparkles"
-					:disabled="!!!formState.text && !!!formState.file"
-					block />
-			</UForm>
+					icon="i-heroicons-arrow-right-end-on-rectangle" />
+			</template>
 
-			<UAlert
-				v-if="error"
-				:title="error"
-				color="error"
-				variant="soft"
-				icon="lucide:triangle-alert"
-				close
-				@update:open="() => (error = null)"
-				@close="error = null" />
+			<template #default>
+				<div
+					class="relative aspect-video w-full max-w-3xl mx-auto rounded-xl border border-default bg-default flex items-center justify-center overflow-hidden shadow-2xl">
+					<div class="text-center space-y-2 p-8">
+						<UIcon
+							name="lucide:file-text"
+							class="w-24 h-24 text-primary opacity-80" />
+						<p class="text-muted font-medium">PDF to Quiz Engine</p>
+					</div>
+					<div
+						class="absolute inset-0 bg-linear-to-tr from-primary-500/10 to-transparent pointer-events-none" />
+				</div>
+			</template>
+		</UPageHero>
 
-			<UCard v-if="result" class="mt-8">
-				<template #header>
-					<h3 class="text-lg font-semibold">Your Study Guide</h3>
-				</template>
+		<USeparator />
 
-				<MDC :value="result" class="" />
-			</UCard>
-		</div>
-	</UPageHero>
+		<UPageSection
+			title="Your Personal AI Tutor"
+			description="Kerna doesn't just summarize; it helps you actively learn."
+			:ui="{ container: 'min-h-[75dvh] content-center' }">
+			<template #features>
+				<UPageCard
+					title="PDF Uploads"
+					icon="lucide:file-plus"
+					description="Drag and drop your 50-page textbook chapters. We extract the text and find the gold."
+					variant="subtle" />
+				<UPageCard
+					title="Instant Quizzes"
+					icon="lucide:graduation-cap"
+					description="Test your knowledge immediately. Kerna generates multiple-choice questions with answer keys."
+					variant="subtle" />
+				<UPageCard
+					title="Key Term Extraction"
+					icon="lucide:key-round"
+					description="Never miss a definition. We pull out the most important vocabulary automatically."
+					variant="subtle" />
+			</template>
+		</UPageSection>
+
+		<USeparator />
+
+		<UPageSection
+			title="How it Works"
+			class="bg-muted/30"
+			:ui="{ container: 'min-h-[75dvh] content-center' }">
+			<template #features>
+				<UPageFeature
+					title="Upload or Paste"
+					description="Drop in your lecture slides, PDF chapters, or raw notes."
+					orientation="vertical"
+					class="flex flex-col text-center">
+					<template #leading
+						><div
+							class="size-16 text-2xl font-bold rounded-full flex items-center justify-center text-primary bg-primary/10">
+							1
+						</div></template
+					>
+				</UPageFeature>
+				<UPageFeature
+					title="AI Processing"
+					description="Our advanced AI analyzes the text to understand the core"
+					orientation="vertical"
+					class="flex flex-col text-center">
+					<template #leading
+						><div
+							class="size-16 text-2xl font-bold rounded-full flex items-center justify-center text-primary bg-primary/10">
+							2
+						</div></template
+					>
+				</UPageFeature>
+				<UPageFeature
+					title="Instant Quizzes"
+					description="Get your summary and take the quiz instantly."
+					orientation="vertical"
+					class="flex flex-col text-center">
+					<template #leading
+						><div
+							class="size-16 text-2xl font-bold rounded-full flex items-center justify-center text-primary bg-primary/10">
+							3
+						</div></template
+					>
+				</UPageFeature>
+			</template>
+		</UPageSection>
+
+		<USeparator />
+
+		<UPageSection :ui="{ container: 'min-h-[75dvh] content-center' }">
+			<UPricingPlans :plans="plans" scale compact />
+		</UPageSection>
+
+		<USeparator />
+
+		<UPageSection>
+			<UPageCTA
+				title="Ready to boost your grades?"
+				description="Join students who are saving hours of study time every week."
+				:links="links"
+				variant="subtle" />
+		</UPageSection>
+	</section>
 </template>

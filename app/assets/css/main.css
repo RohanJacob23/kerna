@@ -41,11 +41,3 @@
 	--ui-color-secondary-950: oklch(0.2784 0.0247 192.66);
 	--ui-color-secondary-1000: oklch(0.2077 0.0189 193.33);
 }
-
-:root {
-	--ui-bg: var(--ui-color-neutral-100);
-}
-
-.dark {
-	--ui-bg: var(--ui-color-neutral-900);
-}

@@ -1,3 +1,4 @@
+import { polarClient } from "@polar-sh/better-auth";
 import { createAuthClient } from "better-auth/vue";
 
 export const useAuth = () => {
@@ -8,21 +9,45 @@ export const useAuth = () => {
 		fetchOptions: {
 			headers,
 		},
+		plugins: [polarClient()],
 	});
 
 	const user = useState<typeof authClient.$Infer.Session.user | null>(
 		"auth:user",
 		() => null
 	);
+	const isPro = useState<boolean>("auth:isPro", () => false);
+
+	// 2. Create a function to check Polar for benefits
+	const checkProStatus = async () => {
+		if (user.value) {
+			try {
+				// 'customer.get' fetches Polar data, including benefits
+				const { data, error } =
+					await authClient.customer.benefits.list();
+				if (error) throw new Error(error.message);
+
+				// This is our "firewall" logic, same as the backend.
+				isPro.value = data.result.items.length > 0;
+			} catch (e) {
+				console.error("Failed to check Pro status:", e);
+				isPro.value = false;
+			}
+		} else {
+			isPro.value = false;
+		}
+	};
 
 	const fetchSession = async () => {
+		// await new Promise((resolve) => setTimeout(resolve, 2000));
+
 		const { data } = await authClient.getSession({
 			fetchOptions: {
 				headers,
 			},
 		});
-
 		user.value = data?.user || null;
+		await checkProStatus();
 	};
 
 	const signOut = async () => {
@@ -30,9 +55,10 @@ export const useAuth = () => {
 		if (import.meta.client) {
 			toast.promise(authClient.signOut, {
 				loading: "Logging out",
-				success: () => {
+				success: async () => {
 					user.value = null;
-					navigateTo("/login");
+					isPro.value = false;
+					await navigateTo("/login");
 					return "Logged out";
 				},
 				error: "Logout failed",
@@ -44,7 +70,10 @@ export const useAuth = () => {
 		fetchSession,
 		signIn: authClient.signIn,
 		signUp: authClient.signUp,
+		checkout: authClient.checkout,
+		portal: authClient.customer.portal,
 		signOut,
 		user,
+		isPro,
 	};
 };

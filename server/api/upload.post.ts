@@ -21,7 +21,9 @@ export default defineEventHandler(async (event) => {
 	const parser = new PDFParse({ data: arrayBuffer });
 	const extractedText = (await parser.getText()).text;
 
-	const aiResponse = await generateStudyGuide(extractedText);
+	const title = file.name;
+
+	const aiResponse = await generateStudyGuide(extractedText, title, event);
 
 	return { aiResponse };
 });

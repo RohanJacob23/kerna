@@ -1,9 +1,11 @@
+import { relations } from "drizzle-orm";
 import {
 	pgTable,
 	text,
 	timestamp,
 	boolean,
 	integer,
+	serial,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
@@ -17,7 +19,7 @@ export const user = pgTable("user", {
 		.defaultNow()
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
-	requestsToday: integer("requests_today").default(0),
+	requestsToday: integer("requests_today").default(0).notNull(),
 	lastRequestAt: timestamp("last_request_at"),
 });
 
@@ -67,3 +69,29 @@ export const verification = pgTable("verification", {
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
 });
+
+export const generations = pgTable("generation", {
+	id: serial("id").primaryKey(),
+	userId: text("user_id")
+		.notNull()
+		.references(() => user.id, { onDelete: "cascade" }),
+	title: text("title").notNull(), // e.g., "Chapter 4.pdf" or "History Notes"
+	originalText: text("original_text"), // Optional: store the raw text? (Careful with storage size)
+	// What did the AI give back?
+	// We store the raw markdown string
+	aiResponse: text("ai_response").notNull(),
+	createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Generations = typeof generations.$inferSelect;
+
+export const userRelations = relations(user, ({ many }) => ({
+	generations: many(generations),
+}));
+
+export const generationsRelations = relations(generations, ({ one }) => ({
+	user: one(user, {
+		fields: [generations.userId],
+		references: [user.id],
+	}),
+}));
