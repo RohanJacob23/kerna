@@ -1,10 +1,14 @@
 <script setup lang="ts">
 definePageMeta({ layout: "app" });
+useSeoMeta({ title: "Account" });
+
 const { $toast: toast } = useNuxtApp();
 const { user, isPro, portal } = useAuth();
 
 // // This function calls our new endpoint
 const openBillingPortal = async () => {
+	if (!isPro) return;
+
 	const id = toast.info("Opening billing portal...");
 	const res = await portal();
 
@@ -42,31 +46,42 @@ const openBillingPortal = async () => {
 							<h3 class="font-semibold">Subscription</h3>
 						</template>
 
-						<UAlert
-							v-if="isPro"
-							icon="i-heroicons-check-circle"
-							color="success"
-							variant="soft"
-							title="You are on the Kerna Pro plan!"
-							description="Click the button below to manage your
-								subscription, update your payment method, or
+						<div class="space-y-2">
+							<UAlert
+								v-if="user && !user.emailVerified"
+								title="Please verify your email"
+								description="To unlock unlimited generations and save your history, please verify your email."
+								icon="hugeicons:alert-01"
+								color="error"
+								variant="soft" />
+
+							<UAlert
+								v-if="isPro"
+								icon="hugeicons:checkmark-circle-02"
+								color="success"
+								variant="soft"
+								title="You are on the Kerna Pro plan!"
+								description="Click the button below to manage your
+							subscription, update your payment method, or
 								switch between monthly and yearly billing." />
 
-						<UAlert
-							v-else
-							icon="i-heroicons-no-symbol"
-							color="info"
-							variant="soft"
-							title="You are on the Free plan."
-							description="To unlock unlimited generations and save your
-								history, please upgrade to Pro." />
+							<UAlert
+								v-else
+								icon="hugeicons:alert-circle"
+								color="info"
+								variant="soft"
+								title="You are on the Free plan."
+								description="To unlock unlimited generations and save your
+							history, please upgrade to Pro." />
+						</div>
 
 						<template #footer
 							><UButton
 								label="Manage Billing"
-								icon="i-heroicons-credit-card"
+								icon="hugeicons:credit-card"
 								block
 								loading-auto
+								:disabled="!isPro"
 								@click="openBillingPortal"
 						/></template>
 					</UCard>

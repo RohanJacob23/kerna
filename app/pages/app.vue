@@ -3,6 +3,7 @@ import type { FormSubmitEvent } from "@nuxt/ui";
 import z from "zod";
 
 definePageMeta({ layout: "app" });
+useSeoMeta({ title: "App" });
 
 const route = useRoute();
 const router = useRouter();
@@ -30,14 +31,26 @@ onMounted(() => {
 
 const formSchema = z.object({
 	text: z.string().optional(),
-	file: z.file().mime("application/pdf").optional(),
+	file: z
+		.file()
+		.mime([
+			"application/pdf",
+			"text/plain",
+			"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		])
+		.optional(),
+	url: z.url().optional(),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
 
 // --- State ---
 // Holds the text from the <textarea>
-const formState = reactive<Partial<FormSchema>>({ text: "", file: undefined });
+const formState = reactive<Partial<FormSchema>>({
+	text: "",
+	url: undefined,
+	file: undefined,
+});
 // Stores the final AI-generated response (as Markdown)
 const result = ref("");
 // Tracks the loading state for the API call
@@ -56,7 +69,6 @@ const { $toast: toast } = useNuxtApp();
 const handleSubmit = async ({ data }: FormSubmitEvent<FormSchema>) => {
 	result.value = "";
 	loading.value = true;
-	const loadingToast = toast.loading("Generating study guide...");
 
 	try {
 		if (data.text) {
@@ -67,15 +79,9 @@ const handleSubmit = async ({ data }: FormSubmitEvent<FormSchema>) => {
 
 			if (!res.aiResponse) {
 				error.value = "Error generating study guide. Please try again.";
-				toast.error("Error generating study guide. Please try again.", {
-					id: loadingToast,
-				});
+				toast.error("Error generating study guide. Please try again.");
 				return;
 			}
-
-			toast.success("Study guide generated successfully!", {
-				id: loadingToast,
-			});
 
 			clearNuxtData("history");
 			result.value = res.aiResponse;
@@ -90,16 +96,22 @@ const handleSubmit = async ({ data }: FormSubmitEvent<FormSchema>) => {
 
 			if (!res.aiResponse) {
 				error.value = "Error generating study guide. Please try again.";
-				toast.error("Error generating study guide. Please try again.", {
-					id: loadingToast,
-				});
+				toast.error("Error generating study guide. Please try again.");
 				return;
 			}
-
-			toast.success("Study guide generated successfully!", {
-				id: loadingToast,
+			clearNuxtData("history");
+			result.value = res.aiResponse;
+		} else if (data.url) {
+			const res = await $fetch("/api/scrape", {
+				method: "POST",
+				body: data,
 			});
 
+			if (!res.aiResponse) {
+				error.value = "Error generating study guide. Please try again.";
+				toast.error("Error generating study guide. Please try again.");
+				return;
+			}
 			clearNuxtData("history");
 			result.value = res.aiResponse;
 		}
@@ -108,21 +120,20 @@ const handleSubmit = async ({ data }: FormSubmitEvent<FormSchema>) => {
 			if ("status" in e && e.status === 429) {
 				upgradeError.value = true;
 				toast.warning("Upgrade to Pro", {
-					id: loadingToast,
 					description: "You have reached your free plan limit.",
 				});
 			} else {
 				error.value = e.message;
-				toast.error(e.message, { id: loadingToast });
+				toast.error(e.message);
 			}
 		}
 	}
 	loading.value = false;
 };
 
-const handleUpgrade = async () => {
+const handleUpgrade = async (plan: "pro-montly" | "pro-yearly") => {
 	const loadingToast = toast.loading("Upgrading to Pro");
-	await upgrade().finally(() => {
+	await upgrade(plan).finally(() => {
 		toast.info("Redirecting to payment", { id: loadingToast });
 	});
 };
@@ -136,16 +147,22 @@ const handleUpgrade = async () => {
 			description="Unlock the full potential of Kerna by upgrading to our Pro plan."
 			color="warning"
 			variant="soft"
-			icon="i-heroicons-exclamation-triangle"
+			icon="hugeicons:alert-01"
 			class="rounded-none justify-center gap-8"
 			:ui="{ wrapper: 'flex-none' }"
 			orientation="horizontal"
 			:actions="[
 				{
-					label: 'Upgrade',
+					label: 'Upgrade Monthly',
 					color: 'warning',
 					variant: 'subtle',
-					onClick: handleUpgrade,
+					onClick: () => handleUpgrade('pro-montly'),
+				},
+				{
+					label: 'Upgrade Yearly',
+					color: 'warning',
+					variant: 'subtle',
+					onClick: () => handleUpgrade('pro-yearly'),
 				},
 			]"
 			@close="upgradeError = false" />
@@ -164,29 +181,51 @@ const handleUpgrade = async () => {
 							v-model="formState.text"
 							class="w-full"
 							placeholder="Paste your textbook chapter, lecture notes, or any article here..."
-							:disabled="loading"
+							:disabled="
+								loading || !!formState.url || !!formState.file
+							"
 							autoresize />
 					</UFormField>
 
 					<USeparator label="OR" />
 
-					<UFormField label="Option 2: Upload a PDF" name="file">
+					<UFormField label="Option 2: Paste a URL" name="url">
+						<UInput
+							v-model="formState.url"
+							placeholder="Paste a URL here..."
+							:disabled="
+								loading || !!formState.text || !!formState.file
+							"
+							class="w-full" />
+					</UFormField>
+
+					<USeparator label="OR" />
+
+					<UFormField
+						label="Option 3: Upload a PDF, Doc, or Text File"
+						name="file">
 						<UFileUpload
 							id="file-input"
 							v-model="formState.file"
 							variant="button"
-							size="xl"
-							:disabled="loading"
-							accept=".pdf" />
+							icon="hugeicons:upload-01"
+							:disabled="
+								loading || !!formState.url || !!formState.text
+							"
+							accept=".pdf,.doc,.docx,.txt" />
 					</UFormField>
 
 					<UButton
 						type="submit"
 						label="Generate Study Guide"
 						:loading="loading"
-						size="xl"
-						icon="lucide:sparkles"
-						:disabled="!!!formState.text && !!!formState.file"
+						size="lg"
+						icon="hugeicons:sparkles"
+						:disabled="
+							!!!formState.text &&
+							!!!formState.file &&
+							!!!formState.url
+						"
 						block />
 				</UForm>
 
@@ -195,7 +234,8 @@ const handleUpgrade = async () => {
 					:title="error"
 					color="error"
 					variant="soft"
-					icon="lucide:triangle-alert"
+					size="lg"
+					icon="hugeicons:alert-01"
 					close
 					@update:open="() => (error = null)"
 					@close="error = null" />
@@ -205,7 +245,7 @@ const handleUpgrade = async () => {
 						<h3 class="text-lg font-semibold">Your Study Guide</h3>
 					</template>
 
-					<MDC :value="result" class="" />
+					<MDC :value="result" class="font-lora" />
 				</UCard>
 			</div>
 		</UPageHero>

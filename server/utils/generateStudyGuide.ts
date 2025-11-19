@@ -4,16 +4,14 @@ import { createError, type H3Event, type EventHandlerRequest } from "h3";
 import { db } from "~~/db";
 import { generations, user } from "~~/db/schema";
 
-const DAILY_LIMIT = 10; // Set your limit
+const DAILY_LIMIT = 20; // Set your limit
 
-async function hasProAccess(event: H3Event): Promise<boolean> {
-	const benefits = await auth.api.benefits({
+async function hasProAccess(event: H3Event) {
+	const subscriptions = await auth.api.dodoSubscriptions({
 		headers: event.headers,
 	});
 
-	// This will be > 0 if they are on a trial or any paid plan
-	// that grants the "Pro Access" benefit.
-	return benefits.result.items.length > 0;
+	return subscriptions.items.length > 0;
 }
 
 /**

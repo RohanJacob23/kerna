@@ -3,17 +3,17 @@
 @import "@nuxt/ui";
 
 @theme static {
-	--ui-color-neutral-50: oklch(0.9851 0 0);
-	--ui-color-neutral-100: oklch(0.97 0 0);
-	--ui-color-neutral-200: oklch(0.922 0 0);
-	--ui-color-neutral-300: oklch(0.87 0 0);
-	--ui-color-neutral-400: oklch(0.708 0 0);
-	--ui-color-neutral-500: oklch(0.556 0 0);
-	--ui-color-neutral-600: oklch(0.439 0 0);
-	--ui-color-neutral-700: oklch(0.371 0 0);
-	--ui-color-neutral-800: oklch(0.269 0 0);
-	--ui-color-neutral-900: oklch(0.205 0 0);
-	--ui-color-neutral-950: oklch(0.145 0 0);
+	--ui-color-neutral-50: oklch(0.9916 0 0);
+	--ui-color-neutral-100: oklch(0.9758 0 0);
+	--ui-color-neutral-200: oklch(0.9268 0 0);
+	--ui-color-neutral-300: oklch(0.8739 0 0);
+	--ui-color-neutral-400: oklch(0.7106 0 0);
+	--ui-color-neutral-500: oklch(0.5576 0 0);
+	--ui-color-neutral-600: oklch(0.44 0 0);
+	--ui-color-neutral-700: oklch(0.3716 0 0);
+	--ui-color-neutral-800: oklch(0.2692 0 0);
+	--ui-color-neutral-900: oklch(0.1822 0 0);
+	--ui-color-neutral-950: oklch(0.1451 0 0);
 
 	--ui-color-primary-50: oklch(0.9866 0.0288 120.05);
 	--ui-color-primary-100: oklch(0.9676 0.0628 121.5);
@@ -28,16 +28,24 @@
 	--ui-color-primary-950: oklch(0.2748 0.0672 130.42);
 	--ui-color-primary-1000: oklch(0.1896 0.0494 131.02);
 
-	--ui-color-secondary-50: oklch(0.9867 0.0076 181.58);
-	--ui-color-secondary-100: oklch(0.9553 0.0271 181.68);
-	--ui-color-secondary-200: oklch(0.9119 0.0509 181.34);
-	--ui-color-secondary-300: oklch(0.8565 0.0734 182);
-	--ui-color-secondary-400: oklch(0.7781 0.0811 182.96);
-	--ui-color-secondary-500: oklch(0.7047 0.0747 183.62);
-	--ui-color-secondary-600: oklch(0.5591 0.0631 185.87);
-	--ui-color-secondary-700: oklch(0.5115 0.0514 187.55);
-	--ui-color-secondary-800: oklch(0.4378 0.0417 189.35);
-	--ui-color-secondary-900: oklch(0.3869 0.0337 189.61);
-	--ui-color-secondary-950: oklch(0.2784 0.0247 192.66);
-	--ui-color-secondary-1000: oklch(0.2077 0.0189 193.33);
+	--font-sans: "Lexend", sans-serif;
+}
+
+/* Target the html or a specific container class, not the universal selector */
+html::-webkit-scrollbar {
+	width: 4px; /* This width should now apply */
+}
+
+html::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+	background-color: var(--color-primary-500);
+	border-radius: 4px;
+}
+
+html {
+	scrollbar-color: var(--color-primary-500) transparent;
+	scrollbar-width: 4px;
 }

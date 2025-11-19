@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from "@nuxt/ui";
 
+const colorMode = useColorMode();
+
+const isDark = computed({
+	get() {
+		return colorMode.value === "dark";
+	},
+	set(_isDark) {
+		colorMode.preference = _isDark ? "dark" : "light";
+	},
+});
+
 const loading = ref(false);
 const auth = useAuth();
 
@@ -21,8 +32,12 @@ const items = ref<DropdownMenuItem[][]>([
 		{ type: "separator" },
 		{ label: "Account", to: "/account" },
 		{ label: "Settings", disabled: true },
+		{
+			label: "Toggle Theme",
+			onSelect: () => (isDark.value = !isDark.value),
+		},
 	],
-	[{ label: "Logout", onSelect: handleLogout }],
+	[{ label: "Logout", color: "error", onSelect: handleLogout }],
 ]);
 </script>
 

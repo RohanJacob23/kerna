@@ -12,11 +12,27 @@ const items: NavigationMenuItem[] = [
 		disabled: true,
 	},
 ];
+
+const { user } = useAuth();
 </script>
 
 <template>
 	<section>
-		<UHeader title="KERNA">
+		<UBanner
+			v-if="user && !user.emailVerified"
+			title="Please verify your email"
+			icon="hugeicons:information-circle" />
+		<UHeader>
+			<template #title>
+				<UColorModeImage
+					light="/logo-light.png"
+					dark="/logo-dark.png"
+					class="h-12 w-auto"
+					:width="500"
+					:height="500"
+					alt="Kerna Logo"
+					preload
+			/></template>
 			<UNavigationMenu :items="items" />
 			<template #right> <AuthButton /> </template>
 			<template #body>
@@ -37,21 +53,14 @@ const items: NavigationMenuItem[] = [
 			<UNavigationMenu :items="items" variant="link" />
 			<template #right>
 				<UButton
-					icon="i-simple-icons-discord"
-					color="neutral"
-					variant="ghost"
-					to="https://go.nuxt.com/discord"
-					target="_blank"
-					aria-label="Discord" />
-				<UButton
-					icon="i-simple-icons-x"
+					icon="hugeicons:new-twitter"
 					color="neutral"
 					variant="ghost"
 					to="https://go.nuxt.com/x"
 					target="_blank"
 					aria-label="X" />
 				<UButton
-					icon="i-simple-icons-github"
+					icon="hugeicons:github"
 					color="neutral"
 					variant="ghost"
 					to="https://github.com/nuxt/nuxt"

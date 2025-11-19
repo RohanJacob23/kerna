@@ -1,4 +1,4 @@
-import { polarClient } from "@polar-sh/better-auth";
+import { dodopaymentsClient } from "@dodopayments/better-auth";
 import { createAuthClient } from "better-auth/vue";
 
 export const useAuth = () => {
@@ -9,7 +9,7 @@ export const useAuth = () => {
 		fetchOptions: {
 			headers,
 		},
-		plugins: [polarClient()],
+		plugins: [dodopaymentsClient()],
 	});
 
 	const user = useState<typeof authClient.$Infer.Session.user | null>(
@@ -24,11 +24,13 @@ export const useAuth = () => {
 			try {
 				// 'customer.get' fetches Polar data, including benefits
 				const { data, error } =
-					await authClient.customer.benefits.list();
+					await authClient.dodopayments.customer.subscriptions.list({
+						query: { status: "active" },
+					});
 				if (error) throw new Error(error.message);
 
 				// This is our "firewall" logic, same as the backend.
-				isPro.value = data.result.items.length > 0;
+				isPro.value = data.items.length > 0;
 			} catch (e) {
 				console.error("Failed to check Pro status:", e);
 				isPro.value = false;
@@ -70,8 +72,8 @@ export const useAuth = () => {
 		fetchSession,
 		signIn: authClient.signIn,
 		signUp: authClient.signUp,
-		checkout: authClient.checkout,
-		portal: authClient.customer.portal,
+		checkout: authClient.dodopayments.checkoutSession,
+		portal: authClient.dodopayments.customer.portal,
 		signOut,
 		user,
 		isPro,
