@@ -22,6 +22,8 @@ const handleLogout = async () => {
 	await auth.signOut();
 };
 
+const open = ref(false);
+
 const items = ref<DropdownMenuItem[][]>([
 	[
 		{
@@ -30,7 +32,8 @@ const items = ref<DropdownMenuItem[][]>([
 			type: "label",
 		},
 		{ type: "separator" },
-		{ label: "Account", to: "/account" },
+		{ label: "Account", to: "/account", active: false },
+		{ label: "Feedback", onSelect: () => (open.value = true) },
 		{ label: "Settings", disabled: true },
 		{
 			label: "Toggle Theme",
@@ -48,7 +51,11 @@ const items = ref<DropdownMenuItem[][]>([
 			:ui="{ content: 'w-56' }"
 			:content="{ align: 'end', sideOffset: 4 }">
 			<UButton
-				:avatar="{ alt: auth.user.value.name, size: 'md' }"
+				:avatar="{
+					src: auth.user.value.image ?? '',
+					alt: auth.user.value.name,
+					size: 'md',
+				}"
 				variant="link"
 				color="neutral"
 				class="cursor-pointer rounded-full" />
@@ -62,4 +69,6 @@ const items = ref<DropdownMenuItem[][]>([
 		>
 		<UButton to="/login">Login</UButton>
 	</div>
+
+	<FeedbackModal v-model:open="open" />
 </template>

@@ -3,17 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { dodopayments, checkout, portal } from "@dodopayments/better-auth";
 import DodoPayments from "dodopayments";
 import { db } from "~~/db"; // your drizzle instance
-import nodemailer from "nodemailer";
-
-const transporter = nodemailer.createTransport({
-	host: process.env.SMTP_HOST, // e.g., 'smtp-relay.brevo.com'
-	port: 587,
-	secure: false, // true for 465, false for other ports
-	auth: {
-		user: process.env.SMTP_USER, // Your Brevo/Gmail email
-		pass: process.env.SMTP_PASS, // Your API Key or App Password
-	},
-});
+import { transporter } from "./transporter";
 
 export const dodoPayments = new DodoPayments({
 	bearerToken: process.env.DODO_API_KEY!,
@@ -24,6 +14,16 @@ export const auth = betterAuth({
 	database: drizzleAdapter(db, {
 		provider: "pg", // or "mysql", "sqlite"
 	}),
+	socialProviders: {
+		github: {
+			clientId: process.env.GITHUB_CLIENT_ID as string,
+			clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+		},
+		google: {
+			clientId: process.env.GOOGLE_CLIENT_ID as string,
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+		},
+	},
 	emailAndPassword: {
 		enabled: true,
 		minPasswordLength: 3,

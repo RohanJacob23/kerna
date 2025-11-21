@@ -70,7 +70,13 @@ const handleDelete = async (id: number) => {
 				description="Here are all the study guides you've created." />
 
 			<UPageBody>
-				<div v-if="pending" class="mt-8">
+				<UInput
+					v-model="searchQuery"
+					placeholder="Search..."
+					icon="hugeicons:search-01"
+					:disabled="pending || (history && history.length === 0)"
+					class="mb-4! w-full" />
+				<div v-if="pending">
 					<USkeleton
 						v-for="i in 3"
 						:key="i"
@@ -84,17 +90,14 @@ const handleDelete = async (id: number) => {
 					variant="soft"
 					icon="hugeicons:alert-01"
 					class="mt-8" />
-				<UAlert
+				<UEmpty
 					v-else-if="history && history.length === 0"
-					title="You haven't generated any study guides yet."
-					class="mt-8"
-					variant="subtle" />
+					icon="hugeicons:file-02"
+					variant="subtle"
+					title="No history found"
+					description="You haven't generated any study guides yet." />
 
 				<UPageList v-else class="space-y-4">
-					<UInput
-						v-model="searchQuery"
-						placeholder="Search..."
-						icon="hugeicons:search-01" />
 					<UPageCard
 						v-for="gen in filteredHistory"
 						:key="gen.id"

@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
 
-const items: NavigationMenuItem[] = [
+const items = ref<NavigationMenuItem[]>([
 	{
 		label: "App",
 		to: "/app",
 	},
 	{ label: "History", to: "/history" },
-	{
-		label: "Releases",
-		disabled: true,
-	},
-];
+]);
+
+const footerLinks = ref<NavigationMenuItem[]>([
+	{ label: "Privacy Policy", to: "/privacy" },
+	{ label: "Terms of Service", to: "/terms" },
+]);
 </script>
 
 <template>
@@ -53,7 +54,9 @@ const items: NavigationMenuItem[] = [
 					<NuxtTime :datetime="Date.now()" year="numeric" />
 				</p>
 			</template>
-			<UNavigationMenu :items="items" variant="link" />
+			<UNavigationMenu
+				:items="[...items, ...footerLinks]"
+				variant="link" />
 			<template #right>
 				<UButton
 					icon="hugeicons:new-twitter"

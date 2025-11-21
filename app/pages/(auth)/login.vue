@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import type { AuthFormField, FormSubmitEvent } from "@nuxt/ui";
+import type { AuthFormField, FormSubmitEvent, AuthFormProps } from "@nuxt/ui";
 import z from "zod";
 
 definePageMeta({ layout: "auth" });
+
+const loading = ref(false);
+const { $toast: toast } = useNuxtApp();
+const auth = useAuth();
 
 const fields = ref<AuthFormField[]>([
 	{
@@ -17,6 +21,25 @@ const fields = ref<AuthFormField[]>([
 	},
 ]);
 
+const providers = ref<AuthFormProps["providers"]>([
+	{
+		label: "Google",
+		icon: "hugeicons:google",
+		onClick: async () => {
+			await auth.signIn.social({ provider: "google" });
+		},
+		loadingAuto: true,
+	},
+	{
+		label: "GitHub",
+		icon: "hugeicons:github",
+		onClick: async () => {
+			await auth.signIn.social({ provider: "github" });
+		},
+		loadingAuto: true,
+	},
+]);
+
 const schema = z.object({
 	email: z.email("Invalid email"),
 	password: z
@@ -25,10 +48,6 @@ const schema = z.object({
 });
 
 type Schema = z.infer<typeof schema>;
-
-const loading = ref(false);
-const { $toast: toast } = useNuxtApp();
-const auth = useAuth();
 
 const handleSubmit = async ({ data }: FormSubmitEvent<Schema>) => {
 	loading.value = true;
@@ -58,6 +77,8 @@ const handleSubmit = async ({ data }: FormSubmitEvent<Schema>) => {
 				title="Login"
 				description="Enter your credentials to access your account."
 				:loading="loading"
+				:providers="providers"
+				:ui="{ providers: 'flex space-y-0 gap-2' }"
 				@submit="handleSubmit"
 				><template #footer>
 					Don't have an account?
