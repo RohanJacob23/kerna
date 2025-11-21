@@ -83,6 +83,17 @@ export const generations = pgTable("generation", {
 	createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const feedback = pgTable("feedback", {
+	id: serial("id").primaryKey(),
+	userId: text("user_id")
+		.notNull()
+		.references(() => user.id, { onDelete: "cascade" }),
+	message: text("message").notNull(),
+	type: text("type").notNull(),
+	email: text("email"),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type Generations = typeof generations.$inferSelect;
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -92,6 +103,13 @@ export const userRelations = relations(user, ({ many }) => ({
 export const generationsRelations = relations(generations, ({ one }) => ({
 	user: one(user, {
 		fields: [generations.userId],
+		references: [user.id],
+	}),
+}));
+
+export const feedbackRelations = relations(feedback, ({ one }) => ({
+	user: one(user, {
+		fields: [feedback.userId],
 		references: [user.id],
 	}),
 }));

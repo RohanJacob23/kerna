@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
 
-const items: NavigationMenuItem[] = [
+const items = ref<NavigationMenuItem[]>([
 	{
 		label: "App",
 		to: "/app",
 	},
 	{ label: "History", to: "/history" },
-	{
-		label: "Releases",
-		disabled: true,
-	},
-];
+]);
+
+const footerLinks = ref<NavigationMenuItem[]>([
+	{ label: "Privacy Policy", to: "/privacy" },
+	{ label: "Terms of Service", to: "/terms" },
+]);
 
 const { user } = useAuth();
 </script>
@@ -22,6 +23,7 @@ const { user } = useAuth();
 			v-if="user && !user.emailVerified"
 			title="Please verify your email"
 			icon="hugeicons:information-circle" />
+
 		<UHeader>
 			<template #title>
 				<UColorModeImage
@@ -39,6 +41,7 @@ const { user } = useAuth();
 				<UNavigationMenu :items="items" orientation="vertical" />
 			</template>
 		</UHeader>
+
 		<UMain>
 			<slot />
 		</UMain>
@@ -50,7 +53,9 @@ const { user } = useAuth();
 					<NuxtTime :datetime="Date.now()" year="numeric" />
 				</p>
 			</template>
-			<UNavigationMenu :items="items" variant="link" />
+			<UNavigationMenu
+				:items="[...items, ...footerLinks]"
+				variant="link" />
 			<template #right>
 				<UButton
 					icon="hugeicons:new-twitter"

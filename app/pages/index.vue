@@ -56,9 +56,11 @@ const plans = computed<PricingPlanProps[]>(() => [
 			"Priority Support",
 		],
 		button: {
-			label: "Purchase",
+			label: "Comming Soon",
+			// label: "Purchase",
 			loading: loading.value,
-			onClick: () => handleUpgrade("pro-yearly"),
+			disabled: true,
+			// onClick: () => handleUpgrade("pro-yearly"),
 		},
 		scale: true,
 	},
@@ -75,7 +77,7 @@ const plans = computed<PricingPlanProps[]>(() => [
 			"Priority Support",
 		],
 		button: {
-			label: "Purchase",
+			label: "Comming Soon",
 			loading: loading.value,
 			variant: "subtle",
 			onClick: () => handleUpgrade("pro-montly"),
