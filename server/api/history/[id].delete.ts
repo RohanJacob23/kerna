@@ -1,10 +1,10 @@
 import { eq } from "drizzle-orm";
 import z from "zod";
-import { db } from "~~/db";
-import { generations } from "~~/db/schema";
+import { db } from "~~/server/db";
+import { generations } from "~~/server/db/schema";
 
 const paramsSchema = z.object({
-	id: z.coerce.number(),
+	id: z.string(),
 });
 
 export default defineEventHandler(async (event) => {

@@ -2,8 +2,9 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { dodopayments, checkout, portal } from "@dodopayments/better-auth";
 import DodoPayments from "dodopayments";
-import { db } from "~~/db"; // your drizzle instance
+import { db } from "~~/server/db"; // your drizzle instance
 import { transporter } from "./transporter";
+import { planEnum } from "~~/server/db/schema";
 
 export const dodoPayments = new DodoPayments({
 	bearerToken: process.env.DODO_API_KEY!,
@@ -41,6 +42,20 @@ export const auth = betterAuth({
 			});
 		},
 	},
+	user: {
+		additionalFields: {
+			credits: {
+				type: "number",
+				required: true,
+				input: false,
+			},
+			plan: {
+				type: planEnum.enumValues,
+				required: true,
+				input: false,
+			},
+		},
+	},
 	plugins: [
 		dodopayments({
 			client: dodoPayments,
@@ -49,12 +64,16 @@ export const auth = betterAuth({
 				checkout({
 					products: [
 						{
-							productId: process.env.DODO_PRODUCT_ID_MONTHLY!,
-							slug: "pro-montly",
+							productId: process.env.DODO_CRAM_WEEK_ID!,
+							slug: "cram_week",
 						},
 						{
-							productId: process.env.DODO_PRODUCT_ID_YEARLY!,
-							slug: "pro-yearly",
+							productId: process.env.DODO_MONTHLY_ID!,
+							slug: "monthly",
+						},
+						{
+							productId: process.env.DODO_ANNUAL_ID!,
+							slug: "annual",
 						},
 					],
 					successUrl: "/app?checkout_id={CHECKOUT_ID}",

@@ -6,10 +6,12 @@ export default defineNuxtConfig({
 	devtools: { enabled: true },
 	runtimeConfig: {
 		public: {
-			dodoProductIdMontly: process.env.DODO_PRODUCT_ID_MONTHLY,
-			dodoProductIdYearly: process.env.DODO_PRODUCT_ID_YEARLY,
+			dodoCramWeek: process.env.DODO_CRAM_WEEK_ID,
+			dodoMonthly: process.env.DODO_MONTHLY_ID,
+			dodoAnnual: process.env.DODO_ANNUAL_ID,
 		},
-		googleAiKey: process.env.GEMINI_API_KEY,
+		googleAiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+		openrouterApiKey: process.env.OPENROUTER_API_KEY,
 		dodoApiKey: process.env.DODO_API_KEY,
 		smtpKey: process.env.SMTP_KEY,
 		smtpHost: process.env.SMTP_HOST,
@@ -28,6 +30,7 @@ export default defineNuxtConfig({
 		"@nuxtjs/mdc",
 		"vue-sonner/nuxt",
 		"motion-v/nuxt",
+		"@nuxt/hints",
 	],
 	content: {
 		experimental: { nativeSqlite: true },

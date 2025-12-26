@@ -13,6 +13,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
 	// specific key ensures this only runs once during hydration
 	await callOnce("auth-init", auth.fetchSession);
 
+	console.log(auth.user.value);
+
 	const userIsAuthenticated = !!auth.user.value;
 
 	// 4. Logic for Auth Routes (Login/Signup)

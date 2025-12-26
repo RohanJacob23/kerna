@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import type { FormSubmitEvent } from "@nuxt/ui";
-import z from "zod";
+import type { NuxtError } from "#app";
+import { useCompletion } from "@ai-sdk/vue";
 
 definePageMeta({ layout: "app" });
 useSeoMeta({ title: "App" });
 
 const route = useRoute();
 const router = useRouter();
-
 // --- Handle Payment Success ---
 onMounted(() => {
 	// Check if the URL has ?payment=success
@@ -29,113 +28,46 @@ onMounted(() => {
 	}
 });
 
-const formSchema = z.object({
-	text: z.string().optional(),
-	file: z
-		.file()
-		.mime([
-			"application/pdf",
-			"text/plain",
-			"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		])
-		.optional(),
-	url: z.url().optional(),
-});
-
-type FormSchema = z.infer<typeof formSchema>;
-
-// --- State ---
-// Holds the text from the <textarea>
-const formState = reactive<Partial<FormSchema>>({
-	text: "",
-	url: undefined,
-	file: undefined,
-});
-// Stores the final AI-generated response (as Markdown)
-const result = ref("");
-// Tracks the loading state for the API call
-const loading = ref(false);
-// Holds any error messages
-const error = ref<string | null>(null);
 const upgradeError = ref(false);
 
 const { $toast: toast } = useNuxtApp();
 
-// --- Logic ---
-/**
- * This function is called when the user submits the form.
- * It sends the `textInput` to our backend API endpoint.
- */
-const handleSubmit = async ({ data }: FormSubmitEvent<FormSchema>) => {
-	result.value = "";
-	loading.value = true;
+const url = ref("");
+const file = ref<File | null>(null);
+const model = ref("gemini-2.5-flash-lite");
+const error = ref<NuxtError>();
 
-	try {
-		if (data.text) {
-			const res = await $fetch("/api/generate", {
-				method: "POST",
-				body: data,
-			});
+const { input, isLoading, complete, completion } = useCompletion({
+	api: "/api/generate",
+	body: {
+		modelChoice: model.value,
+	},
+	onError: (err) => {
+		const parsedError = JSON.parse(err.message) as NuxtError;
 
-			if (!res.aiResponse) {
-				error.value = "Error generating study guide. Please try again.";
-				toast.error("Error generating study guide. Please try again.");
-				return;
-			}
-
-			clearNuxtData("history");
-			result.value = res.aiResponse;
-		} else if (data.file) {
-			const formData = new FormData();
-			formData.append("file", data.file);
-
-			const res = await $fetch("/api/upload", {
-				method: "POST",
-				body: formData,
-			});
-
-			if (!res.aiResponse) {
-				error.value = "Error generating study guide. Please try again.";
-				toast.error("Error generating study guide. Please try again.");
-				return;
-			}
-			clearNuxtData("history");
-			result.value = res.aiResponse;
-		} else if (data.url) {
-			const res = await $fetch("/api/scrape", {
-				method: "POST",
-				body: data,
-			});
-
-			if (!res.aiResponse) {
-				error.value = "Error generating study guide. Please try again.";
-				toast.error("Error generating study guide. Please try again.");
-				return;
-			}
-			clearNuxtData("history");
-			result.value = res.aiResponse;
+		if (parsedError.statusCode === 402) {
+			upgradeError.value = true;
+			toast.error(parsedError.message);
+		} else {
+			toast.error(parsedError.message);
+			error.value = parsedError;
 		}
-	} catch (e) {
-		if (e instanceof Error) {
-			if ("status" in e && e.status === 429) {
-				upgradeError.value = true;
-				toast.warning("Upgrade to Pro", {
-					description: "You have reached your free plan limit.",
-				});
-			} else {
-				error.value = e.message;
-				toast.error(e.message);
-			}
-		}
+	},
+});
+
+const generateStudyGuide = async () => {
+	if (input.value) {
+		await complete(input.value);
+	} else if (file.value) {
+		const formData = new FormData();
+		formData.append("file", file.value);
+
+		await complete(input.value, { body: formData });
+	} else if (url.value) {
+		await complete(url.value);
 	}
-	loading.value = false;
-};
-
-const handleUpgrade = async (plan: "pro-montly" | "pro-yearly") => {
-	const loadingToast = toast.loading("Upgrading to Pro");
-	await upgrade(plan).finally(() => {
-		toast.info("Redirecting to payment", { id: loadingToast });
-	});
+	input.value = "";
+	clearNuxtData("history");
 };
 </script>
 
@@ -153,16 +85,10 @@ const handleUpgrade = async (plan: "pro-montly" | "pro-yearly") => {
 			orientation="horizontal"
 			:actions="[
 				{
-					label: 'Upgrade Monthly',
+					label: 'Upgrade Now',
 					color: 'warning',
 					variant: 'subtle',
-					onClick: () => handleUpgrade('pro-montly'),
-				},
-				{
-					label: 'Upgrade Yearly',
-					color: 'warning',
-					variant: 'subtle',
-					onClick: () => handleUpgrade('pro-yearly'),
+					to: '/#pricing',
 				},
 			]"
 			@close="upgradeError = false" />
@@ -170,82 +96,81 @@ const handleUpgrade = async (plan: "pro-montly" | "pro-yearly") => {
 		<UPageHero
 			title="Kerna"
 			description="Turn any text into a summary, key terms, and a practice quiz.">
-			<div class="space-y-4">
-				<UForm
-					class="space-y-4"
-					:state="formState"
-					:schema="formSchema"
-					@submit="handleSubmit">
-					<UFormField label="Option 1: Paste Your Text" name="text">
-						<UTextarea
-							v-model="formState.text"
-							class="w-full"
-							placeholder="Paste your textbook chapter, lecture notes, or any article here..."
-							:disabled="
-								loading || !!formState.url || !!formState.file
-							"
-							autoresize />
-					</UFormField>
+			<div class="space-y-4 sticky top-8">
+				<UChatPrompt v-model="input" :error="error">
+					<template #footer>
+						<div class="flex gap-2">
+							<UFileUpload
+								id="file-input"
+								v-model="file"
+								variant="button"
+								icon="hugeicons:upload-01"
+								:disabled="isLoading"
+								:ui="{ base: 'border-solid' }"
+								accept=".pdf,.doc,.docx,.txt"
+								size="sm" />
+							<UPopover
+								mode="click"
+								:ui="{ content: 'p-2 w-80' }">
+								<UButton
+									icon="hugeicons:link-04"
+									:variant="url ? 'subtle' : 'outline'"
+									color="neutral"
+									size="sm"
+									:disabled="isLoading" />
 
-					<USeparator label="OR" />
-
-					<UFormField label="Option 2: Paste a URL" name="url">
-						<UInput
-							v-model="formState.url"
-							placeholder="Paste a URL here..."
-							:disabled="
-								loading || !!formState.text || !!formState.file
-							"
-							class="w-full" />
-					</UFormField>
-
-					<USeparator label="OR" />
-
-					<UFormField
-						label="Option 3: Upload a PDF, Doc, or Text File"
-						name="file">
-						<UFileUpload
-							id="file-input"
-							v-model="formState.file"
-							variant="button"
-							icon="hugeicons:upload-01"
-							:disabled="
-								loading || !!formState.url || !!formState.text
-							"
-							accept=".pdf,.doc,.docx,.txt" />
-					</UFormField>
-
-					<UButton
-						type="submit"
-						label="Generate Study Guide"
-						:loading="loading"
-						size="lg"
-						icon="hugeicons:sparkles"
-						:disabled="
-							!!!formState.text &&
-							!!!formState.file &&
-							!!!formState.url
-						"
-						block />
-				</UForm>
+								<template #content="{ close }">
+									<div class="flex gap-2">
+										<UInput
+											v-model="url"
+											placeholder="https://example.com/article"
+											icon="hugeicons:globe-02"
+											autofocus
+											class="flex-1"
+											@keyup.enter="close" />
+										<UButton
+											v-if="url"
+											icon="hugeicons:delete-02"
+											color="error"
+											variant="ghost"
+											size="xs"
+											@click="url = ''" />
+									</div>
+								</template>
+							</UPopover>
+							<ModelSelect v-model="model" />
+						</div>
+						<UChatPromptSubmit
+							:status="isLoading ? 'streaming' : 'ready'"
+							:disabled="!file && !input && !url"
+							:class="{ '[&_span]:animate-spin': isLoading }"
+							streaming-icon="hugeicons:loading-03"
+							@click="generateStudyGuide" />
+					</template>
+				</UChatPrompt>
 
 				<UAlert
 					v-if="error"
-					:title="error"
+					:title="error.message"
 					color="error"
 					variant="soft"
 					size="lg"
 					icon="hugeicons:alert-01"
 					close
-					@update:open="() => (error = null)"
-					@close="error = null" />
+					@update:open="
+						(open) => {
+							error = undefined;
+							open = false;
+						}
+					" />
 
-				<UCard v-if="result" class="mt-8">
+				<UCard v-if="completion" class="mt-8">
 					<template #header>
 						<h3 class="text-lg font-semibold">Your Study Guide</h3>
 					</template>
-
-					<MDC :value="result" class="font-lora" />
+					<MDC
+						:value="completion"
+						class="prose dark:prose-invert max-w-none" />
 				</UCard>
 			</div>
 		</UPageHero>

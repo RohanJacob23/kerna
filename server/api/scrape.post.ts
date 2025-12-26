@@ -2,7 +2,7 @@ import z from "zod";
 import * as cheerio from "cheerio";
 
 const bodySchema = z.object({
-	url: z.url(),
+	promptUrl: z.url(),
 });
 
 export default defineEventHandler(async (event) => {
@@ -17,11 +17,11 @@ export default defineEventHandler(async (event) => {
 		});
 	}
 
-	const { url } = result.data;
+	const { promptUrl } = result.data;
 	let html = "";
 
 	try {
-		const response = await fetch(url, {
+		const response = await fetch(promptUrl, {
 			headers: {
 				// Pretend to be a browser to avoid some basic blocks
 				"User-Agent":
@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
 	text = text.replace(/\s\s+/g, " ").trim();
 
 	// Extract title
-	const title = htmlParser("title").text().trim() || url;
+	const title = htmlParser("title").text().trim() || promptUrl;
 
 	if (!text || text.length < 100) {
 		throw createError({
@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
 	}
 
 	// Use your existing shared logic
-	const aiResponse = await generateStudyGuide(text, title, event);
+	const streamResult = await generateStudyGuide(text, title, event);
 
-	return { aiResponse };
+	return streamResult.toUIMessageStreamResponse();
 });

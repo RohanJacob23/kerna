@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
 
 	const title = file.name;
 
-	const aiResponse = await generateStudyGuide(extractedText, title, event);
+	const streamResult = await generateStudyGuide(extractedText, title, event);
 
-	return { aiResponse };
+	return streamResult.toUIMessageStreamResponse();
 });

@@ -1,5 +1,6 @@
 import { dodopaymentsClient } from "@dodopayments/better-auth";
 import { createAuthClient } from "better-auth/vue";
+import { inferAdditionalFields } from "better-auth/client/plugins";
 
 export const useAuth = () => {
 	const url = useRequestURL();
@@ -9,7 +10,7 @@ export const useAuth = () => {
 		fetchOptions: {
 			headers,
 		},
-		plugins: [dodopaymentsClient()],
+		plugins: [dodopaymentsClient(), inferAdditionalFields<typeof auth>()],
 	});
 
 	const user = useState<typeof authClient.$Infer.Session.user | null>(

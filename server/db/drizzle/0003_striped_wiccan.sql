@@ -1,0 +1,1 @@
+ALTER TABLE "generation" DROP COLUMN "original_text";

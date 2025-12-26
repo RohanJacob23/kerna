@@ -1,6 +1,6 @@
 {
-  "id": "99e7261b-c585-49f3-9d4c-152f8cc57c08",
-  "prevId": "49cec0bb-830c-4e3c-be1c-21e437b950c3",
+  "id": "51aa0f6f-e460-42a9-9e18-b853659bcf8f",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -110,6 +110,70 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.feedback": {
+      "name": "feedback",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "feedback_user_id_user_id_fk": {
+          "name": "feedback_user_id_user_id_fk",
+          "tableFrom": "feedback",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.generation": {
       "name": "generation",
       "schema": "",
@@ -148,7 +212,7 @@
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "now()"
         }
       },
@@ -164,7 +228,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -307,25 +371,38 @@
           "notNull": true,
           "default": "now()"
         },
-        "requests_today": {
-          "name": "requests_today",
+        "credits": {
+          "name": "credits",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
-        "last_request_at": {
-          "name": "last_request_at",
+        "plan_type": {
+          "name": "plan_type",
+          "type": "plan",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        },
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "credit_reset_at": {
+          "name": "credit_reset_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
-        "plan": {
-          "name": "plan",
-          "type": "text",
+        "plan_expires_at": {
+          "name": "plan_expires_at",
+          "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'free'"
+          "notNull": false
         }
       },
       "indexes": {},
@@ -396,7 +473,18 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "public.plan": {
+      "name": "plan",
+      "schema": "public",
+      "values": [
+        "free",
+        "cram_week",
+        "semester_flex",
+        "annual_scholar"
+      ]
+    }
+  },
   "schemas": {},
   "sequences": {},
   "roles": {},

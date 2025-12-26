@@ -1,12 +1,30 @@
-import { relations } from "drizzle-orm";
+import { type InferEnum, relations } from "drizzle-orm";
 import {
 	pgTable,
 	text,
 	timestamp,
 	boolean,
 	integer,
-	serial,
+	pgEnum,
 } from "drizzle-orm/pg-core";
+
+export const planEnum = pgEnum("plan_type", [
+	"free",
+	"cram_week",
+	"monthly",
+	"annual",
+]);
+
+// Define Model Types Enum (for future use)
+export const modelEnum = pgEnum("model_type", [
+	"gemini-2.5-flash-lite",
+	"gpt-4o-mini",
+	"gpt-4o",
+	"claude-sonnet",
+]);
+
+export type ModelType = InferEnum<typeof modelEnum>;
+export type PlanType = InferEnum<typeof planEnum>;
 
 export const user = pgTable("user", {
 	id: text("id").primaryKey(),
@@ -19,8 +37,14 @@ export const user = pgTable("user", {
 		.defaultNow()
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
-	requestsToday: integer("requests_today").default(0).notNull(),
-	lastRequestAt: timestamp("last_request_at"),
+
+	credits: integer("credits").default(5).notNull(),
+	plan: planEnum("plan").default("free").notNull(),
+	subscriptionId: text("subscription_id").references(() => subscription.id, {
+		onDelete: "cascade",
+	}),
+	planExpiresAt: timestamp("plan_expires_at"),
+	lastDailyCreditRefillAt: timestamp("last_daily_credit_refill_at"),
 });
 
 export const session = pgTable("session", {
@@ -71,20 +95,44 @@ export const verification = pgTable("verification", {
 });
 
 export const generations = pgTable("generation", {
-	id: serial("id").primaryKey(),
+	id: text("id")
+		.primaryKey()
+		.$default(() => crypto.randomUUID()),
 	userId: text("user_id")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
 	title: text("title").notNull(), // e.g., "Chapter 4.pdf" or "History Notes"
-	originalText: text("original_text"), // Optional: store the raw text? (Careful with storage size)
+	modelUsed: modelEnum("model_used").notNull(),
+	creditsCost: integer("credits_cost").notNull(),
 	// What did the AI give back?
 	// We store the raw markdown string
 	aiResponse: text("ai_response").notNull(),
-	createdAt: timestamp("created_at").defaultNow(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const subscription = pgTable("subscription", {
+	id: text("id")
+		.primaryKey()
+		.$default(() => crypto.randomUUID()),
+	// userId: text("user_id")
+	// 	.notNull()
+	// 	.references(() => user.id, { onDelete: "cascade" }),
+	plan: planEnum("plan").notNull(),
+
+	// 'active', 'cancelled', 'past_due', etc.
+	status: text("status").notNull(),
+	currentPeriodEnd: timestamp("current_period_end").notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at")
+		.defaultNow()
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull(),
 });
 
 export const feedback = pgTable("feedback", {
-	id: serial("id").primaryKey(),
+	id: text("id")
+		.primaryKey()
+		.$default(() => crypto.randomUUID()),
 	userId: text("user_id")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
@@ -96,8 +144,12 @@ export const feedback = pgTable("feedback", {
 
 export type Generations = typeof generations.$inferSelect;
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ one, many }) => ({
 	generations: many(generations),
+	subscription: one(subscription, {
+		fields: [user.subscriptionId],
+		references: [subscription.id],
+	}),
 }));
 
 export const generationsRelations = relations(generations, ({ one }) => ({

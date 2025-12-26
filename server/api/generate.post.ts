@@ -1,7 +1,13 @@
-import z from "zod";
+import { z } from "zod";
 
 const bodySchema = z.object({
-	text: z.string(),
+	prompt: z.string(),
+	modelChoice: z.enum([
+		"gemini-2.5-flash-lite",
+		"gpt-4o-mini",
+		"gpt-4o",
+		"claude-sonnet",
+	]),
 });
 
 export default defineEventHandler(async (event) => {
@@ -12,13 +18,14 @@ export default defineEventHandler(async (event) => {
 	if (!result.success) {
 		throw createError({
 			statusCode: 400,
-			statusMessage: 'Invalid request. "text" is required.',
+			statusMessage: 'Invalid request. "prompt" is required.',
 		});
 	}
 
-	const { text } = result.data;
-	const title = text.substring(0, 40) + "...";
-	const aiResponse = await generateStudyGuide(text, title, event);
+	const { prompt } = result.data;
 
-	return { aiResponse };
+	const title = prompt.substring(0, 40) + "...";
+	const streamResult = await generateStudyGuide(prompt, title, event);
+
+	return streamResult.toUIMessageStreamResponse();
 });

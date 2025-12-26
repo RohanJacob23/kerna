@@ -1,6 +1,6 @@
 import { eq, desc } from "drizzle-orm";
-import { db } from "~~/db";
-import { generations } from "~~/db/schema";
+import { generations } from "~~/server/db/schema";
+import { db } from "~~/server/db";
 
 export default defineEventHandler(async (event) => {
 	// 1. Get the user session

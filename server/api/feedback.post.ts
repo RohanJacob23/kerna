@@ -1,6 +1,6 @@
 import z from "zod";
-import { db } from "~~/db";
-import { feedback } from "~~/db/schema";
+import { db } from "~~/server/db";
+import { feedback } from "~~/server/db/schema";
 
 const bodySchema = z.object({
 	message: z.string().min(1, "Message is required"),
