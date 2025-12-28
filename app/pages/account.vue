@@ -1,15 +1,25 @@
 <script setup lang="ts">
+import type { PlanType } from "~~/server/db/schema";
+
 definePageMeta({ layout: "app" });
 useSeoMeta({ title: "Account" });
 
 const { $toast: toast } = useNuxtApp();
-const { user, isPro, portal } = useAuth();
+const { user, portal } = useAuth();
+
+const isPro = computed(() => user.value?.plan !== "free");
+const maxCredits = computed(() => {
+	const plan = user.value?.plan ?? ("free" as PlanType);
+	return PLANS[plan].credits;
+});
+
+console.log(user.value?.credits);
 
 // // This function calls our new endpoint
 const openBillingPortal = async () => {
-	if (!isPro) return;
+	if (!isPro.value) return;
 
-	const id = toast.info("Opening billing portal...");
+	const id = toast.loading("Opening billing portal...");
 	const res = await portal();
 
 	if (res.data) {
@@ -41,6 +51,24 @@ const openBillingPortal = async () => {
 						</div>
 					</UCard>
 
+					<UCard v-if="user">
+						<template #header>
+							<h3 class="font-semibold">Credits left</h3>
+						</template>
+						<p
+							class="text-sm text-muted mb-2 [&_span]:text-default">
+							You have <span>{{ user.credits }} /</span>
+							<span>{{ "" }} {{ maxCredits }}</span> credits left
+						</p>
+						<UProgress
+							v-model="user.credits"
+							:max="
+								user.credits > maxCredits
+									? user.credits
+									: maxCredits
+							" />
+					</UCard>
+
 					<UCard>
 						<template #header>
 							<h3 class="font-semibold">Subscription</h3>
@@ -60,10 +88,8 @@ const openBillingPortal = async () => {
 								icon="hugeicons:checkmark-circle-02"
 								color="success"
 								variant="soft"
-								title="You are on the Kerna Pro plan!"
-								description="Click the button below to manage your
-							subscription, update your payment method, or
-								switch between monthly and yearly billing." />
+								:title="`You are on the Kerna's ${user?.plan} plan!`"
+								description="Click the button below to manage your subscription, update your payment method, or switch between monthly and yearly billing." />
 
 							<UAlert
 								v-else

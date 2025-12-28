@@ -4,6 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
 	compatibilityDate: "2025-07-15",
 	devtools: { enabled: true },
+	nitro: {
+		prerender: { concurrency: 1 },
+	},
 	runtimeConfig: {
 		public: {
 			dodoCramWeek: process.env.DODO_CRAM_WEEK_ID,

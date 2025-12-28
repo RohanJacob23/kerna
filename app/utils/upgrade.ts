@@ -10,6 +10,7 @@ export default async function (plan: PlanType) {
 
 	const response = await auth.checkout({
 		slug: plan,
+		metadata: { plan, userId: auth.user.value.id },
 	});
 
 	if (response.data) {

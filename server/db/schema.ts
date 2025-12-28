@@ -45,6 +45,8 @@ export const user = pgTable("user", {
 	}),
 	planExpiresAt: timestamp("plan_expires_at"),
 	lastDailyCreditRefillAt: timestamp("last_daily_credit_refill_at"),
+	creditResetAt: timestamp("credit_reset_at"),
+	isDowngraded: boolean("is_downgraded").default(false).notNull(),
 });
 
 export const session = pgTable("session", {
@@ -114,11 +116,7 @@ export const subscription = pgTable("subscription", {
 	id: text("id")
 		.primaryKey()
 		.$default(() => crypto.randomUUID()),
-	// userId: text("user_id")
-	// 	.notNull()
-	// 	.references(() => user.id, { onDelete: "cascade" }),
 	plan: planEnum("plan").notNull(),
-
 	// 'active', 'cancelled', 'past_due', etc.
 	status: text("status").notNull(),
 	currentPeriodEnd: timestamp("current_period_end").notNull(),
@@ -145,10 +143,27 @@ export const feedback = pgTable("feedback", {
 export type Generations = typeof generations.$inferSelect;
 
 export const userRelations = relations(user, ({ one, many }) => ({
+	accounts: many(account),
+	sessions: many(session),
+	feedbacks: many(feedback),
 	generations: many(generations),
 	subscription: one(subscription, {
 		fields: [user.subscriptionId],
 		references: [subscription.id],
+	}),
+}));
+
+export const accountRelations = relations(account, ({ one }) => ({
+	user: one(user, {
+		fields: [account.userId],
+		references: [user.id],
+	}),
+}));
+
+export const sessionRelations = relations(session, ({ one }) => ({
+	user: one(user, {
+		fields: [session.userId],
+		references: [user.id],
 	}),
 }));
 

@@ -46,6 +46,7 @@ html::-webkit-scrollbar-thumb {
 }
 
 html {
+	@apply selection:bg-primary selection:text-default dark:selection:text-inverted;
 	scrollbar-color: var(--color-primary-500) transparent;
 	scrollbar-width: 4px;
 }

@@ -7,10 +7,13 @@ useSeoMeta({ title: "App" });
 
 const route = useRoute();
 const router = useRouter();
+const auth = useAuth();
+
 // --- Handle Payment Success ---
 onMounted(() => {
 	// Check if the URL has ?payment=success
 	if (route.query.checkout_id) {
+		console.log(route.query.checkout_id);
 		toast.success("Welcome to Pro! Your limits have been removed.");
 
 		// This is important:
@@ -68,6 +71,7 @@ const generateStudyGuide = async () => {
 	}
 	input.value = "";
 	clearNuxtData("history");
+	auth.fetchSession();
 };
 </script>
 

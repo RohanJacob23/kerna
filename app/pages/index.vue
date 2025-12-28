@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { ButtonProps, PricingPlanProps } from "@nuxt/ui";
-import type { PlanType } from "~~/server/db/schema";
+// import type { PlanType } from "~~/server/db/schema";
 
-const loading = ref(false);
+// const loading = ref(false);
 
 const links = ref<ButtonProps[]>([
 	{
@@ -15,13 +15,13 @@ const links = ref<ButtonProps[]>([
 	},
 ]);
 
-const handleUpgrade = async (plan: PlanType) => {
-	loading.value = true;
-	await new Promise((resolve) => setTimeout(resolve, 2000));
-	await upgrade(plan).finally(() => {
-		loading.value = false;
-	});
-};
+// const handleUpgrade = async (plan: PlanType) => {
+// 	loading.value = true;
+// 	await new Promise((resolve) => setTimeout(resolve, 2000));
+// 	await upgrade(plan).finally(() => {
+// 		loading.value = false;
+// 	});
+// };
 
 const plans = computed<PricingPlanProps[]>(() => [
 	{
@@ -60,9 +60,11 @@ const plans = computed<PricingPlanProps[]>(() => [
 			"No Daily Limits",
 		],
 		button: {
-			label: "Get 7-Day Pass",
-			loading: loading.value,
-			onClick: () => handleUpgrade("cram_week"),
+			label: "Comming Soon...",
+			// label: "Get 7-Day Pass",
+			disabled: true,
+			// loading: loading.value,
+			// onClick: () => handleUpgrade("cram_week"),
 		},
 		ui: {
 			featureTitle: "whitespace-normal self-center",
@@ -85,10 +87,12 @@ const plans = computed<PricingPlanProps[]>(() => [
 			"VIP Priority Support",
 		],
 		button: {
-			label: "Get Annual Pro",
+			label: "Comming Soon...",
+			// label: "Get Annual Pro",
 			size: "lg",
-			loading: loading.value,
-			onClick: () => handleUpgrade("annual"),
+			disabled: true,
+			// loading: loading.value,
+			// onClick: () => handleUpgrade("annual"),
 		},
 		ui: {
 			featureTitle: "whitespace-normal self-center",
@@ -108,12 +112,14 @@ const plans = computed<PricingPlanProps[]>(() => [
 			"Access All Pro Models (Claude, GPT-4)",
 			"Full Generation History",
 			"Priority Support",
+			"Student discount available upto 50%",
 		],
 		button: {
-			label: "Subscribe Monthly",
-			variant: "subtle",
-			loading: loading.value,
-			onClick: () => handleUpgrade("monthly"),
+			label: "Comming Soon...",
+			// label: "Subscribe Monthly",
+			disabled: true,
+			// loading: loading.value,
+			// onClick: () => handleUpgrade("monthly"),
 		},
 		ui: {
 			featureTitle: "whitespace-normal self-center",
@@ -290,8 +296,15 @@ const roadmap = [
 
 		<UPageSection
 			id="pricing"
+			title="Pricing plan"
+			description="(Mail your details to me at rohankoshyjacob@gmail.com to get discount code.)"
 			:ui="{ container: 'min-h-[75dvh] content-center' }">
 			<UPricingPlans :plans="plans" scale compact />
+			<div
+				class="text-muted text-sm text-center underline decoration-primary/70">
+				Note: All plans are disabled for now until we have an active
+				userbase
+			</div>
 		</UPageSection>
 
 		<USeparator />
