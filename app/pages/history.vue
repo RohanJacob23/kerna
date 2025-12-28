@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { Generations as GenrationType } from "~~/db/schema";
+import type { Generations as GenrationType } from "~~/server/db/schema";
 import type { SerializeObject } from "nitropack";
 
 definePageMeta({ layout: "app" });
 useSeoMeta({ title: "History" });
 
-type Generations = Omit<GenrationType, "originalText" | "userId">;
+type Generations = Omit<GenrationType, "modelUsed" | "userId" | "creditsCost">;
 
 const { $toast: toast } = useNuxtApp();
 const isDeleting = ref(false);
@@ -17,17 +17,19 @@ const {
 	error,
 } = await useLazyFetch("/api/history", {
 	key: "history",
-	server: false,
 	getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key],
 });
 
 const searchQuery = ref("");
 
 const filteredHistory = computed(() => {
+	// Always fallback to an empty array so v-for never iterates over null
+	const data = history.value || [];
+
 	if (!searchQuery.value) {
-		return history.value;
+		return data;
 	}
-	return history.value?.filter((gen) =>
+	return data.filter((gen) =>
 		gen.title.toLowerCase().includes(searchQuery.value.toLowerCase())
 	);
 });
@@ -42,7 +44,7 @@ const viewGeneration = (generation: SerializeObject<Generations>) => {
 	isModalOpen.value = true;
 };
 
-const handleDelete = async (id: number) => {
+const handleDelete = async (id: string) => {
 	isDeleting.value = true;
 	const toastId = toast.loading("Deleting study guide...");
 
@@ -71,16 +73,15 @@ const handleDelete = async (id: number) => {
 
 			<UPageBody>
 				<UInput
+					id="search"
 					v-model="searchQuery"
 					placeholder="Search..."
 					icon="hugeicons:search-01"
 					:disabled="pending || (history && history.length === 0)"
 					class="mb-4! w-full" />
-				<div v-if="pending">
-					<USkeleton
-						v-for="i in 3"
-						:key="i"
-						class="h-16 w-full mb-4" />
+				<!-- <ClientOnly> -->
+				<div v-if="pending" class="space-y-4">
+					<USkeleton v-for="i in 5" :key="i" class="h-16 w-full" />
 				</div>
 				<UAlert
 					v-else-if="error"
@@ -125,6 +126,7 @@ const handleDelete = async (id: number) => {
 						</div>
 					</UPageCard>
 				</UPageList>
+				<!-- </ClientOnly> -->
 			</UPageBody>
 		</UPage>
 

@@ -34,7 +34,7 @@ callOnce("auth-init", auth.fetchSession);
 	<UApp>
 		<NuxtLayout>
 			<NuxtPage />
-			<AppSonner />
+			<AppSonner close-button />
 		</NuxtLayout>
 	</UApp>
 </template>

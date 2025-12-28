@@ -1,4 +1,6 @@
-export default async function (plan: "pro-montly" | "pro-yearly") {
+import type { PlanType } from "~~/server/db/schema";
+
+export default async function (plan: PlanType) {
 	const auth = useAuth();
 
 	if (!auth.user.value) {
@@ -8,6 +10,7 @@ export default async function (plan: "pro-montly" | "pro-yearly") {
 
 	const response = await auth.checkout({
 		slug: plan,
+		metadata: { plan, userId: auth.user.value.id },
 	});
 
 	if (response.data) {

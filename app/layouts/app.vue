@@ -33,6 +33,8 @@ const { user } = useAuth();
 					:width="500"
 					:height="500"
 					alt="Kerna Logo"
+					loading="eager"
+					fetchpriority="high"
 					preload
 			/></template>
 			<UNavigationMenu :items="items" />

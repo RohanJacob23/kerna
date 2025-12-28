@@ -8,7 +8,7 @@ definePageMeta({ middleware: undefined });
 
 <template>
 	<UContainer class="prose dark:prose-invert">
-		<Upage
+		<UPage
 			><UPageBody>
 				<div class="mb-10 text-center">
 					<h1>Terms of Service</h1>
@@ -98,7 +98,7 @@ definePageMeta({ middleware: undefined });
 						discretion.
 					</p>
 				</div>
-			</UPageBody></Upage
+			</UPageBody></UPage
 		>
 	</UContainer>
 </template>

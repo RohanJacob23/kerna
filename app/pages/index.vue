@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { ButtonProps, PricingPlanProps } from "@nuxt/ui";
+// import type { PlanType } from "~~/server/db/schema";
 
-const loading = ref(false);
+// const loading = ref(false);
 
 const links = ref<ButtonProps[]>([
 	{
@@ -14,73 +15,116 @@ const links = ref<ButtonProps[]>([
 	},
 ]);
 
-const handleUpgrade = async (plan: "pro-montly" | "pro-yearly") => {
-	loading.value = true;
-	await new Promise((resolve) => setTimeout(resolve, 2000));
-	await upgrade(plan).finally(() => {
-		loading.value = false;
-	});
-};
+// const handleUpgrade = async (plan: PlanType) => {
+// 	loading.value = true;
+// 	await new Promise((resolve) => setTimeout(resolve, 2000));
+// 	await upgrade(plan).finally(() => {
+// 		loading.value = false;
+// 	});
+// };
 
 const plans = computed<PricingPlanProps[]>(() => [
 	{
-		title: "Free",
-		description: "Tailored for indie hackers.",
+		title: "Free Tier",
+		description: "Perfect for trying it out.",
 		price: "$0",
-		billingCycle: "/month",
-		billingPeriod: "billed monthly",
+		billingCycle: "/day",
+		billingPeriod: "forever free",
 		features: [
-			"20 AI Generations per Day",
-			"PDF & Text Submissions",
-			"Summary & Key Term Generation",
-			"Practice Quiz Generation",
+			"5 Credits Refilled Daily",
+			"Access to Gemini Flash Model",
+			"PDF, Word & Text Uploads",
+			"Summary, Terms & Quiz Generation",
 		],
 		button: {
-			label: "Free",
+			label: "Start for Free",
 			variant: "subtle",
-			loading: loading.value,
-			disabled: true,
+			to: "/app",
+		},
+		ui: {
+			featureTitle: "whitespace-normal self-center",
+			featureIcon: "h-6",
+			feature: "items-start",
 		},
 	},
 	{
-		title: "Pro Plan",
-		description: "Best suited for small teams.",
-		badge: "Save 20%",
-		price: "$50",
-		billingCycle: "/yearly",
-		billingPeriod: "billed yearly",
+		title: "Cram Week Pass",
+		description: "For finals week panic.",
+		price: "$3.99",
+		billingCycle: "/one-time",
+		billingPeriod: "7 days access",
 		features: [
-			"Everything in Free, plus:",
-			"Unlimited AI Generations",
-			"Full Generation History",
-			"Priority Support",
+			"1,000 Credits (Expires in 7 days)",
+			"Access All Pro Models (Claude, GPT-4)",
+			"Priority Generation Queue",
+			"No Daily Limits",
 		],
 		button: {
-			label: "Comming Soon",
-			// label: "Purchase",
-			loading: loading.value,
+			label: "Comming Soon...",
+			// label: "Get 7-Day Pass",
 			disabled: true,
-			// onClick: () => handleUpgrade("pro-yearly"),
+			// loading: loading.value,
+			// onClick: () => handleUpgrade("cram_week"),
+		},
+		ui: {
+			featureTitle: "whitespace-normal self-center",
+			featureIcon: "h-6",
+			feature: "items-start",
+		},
+	},
+	{
+		title: "Annual Pro",
+		description: "Best value for serious students.",
+		badge: "Save 58%",
+		highlight: true,
+		price: "$49",
+		billingCycle: "/year",
+		billingPeriod: "billed annually",
+		features: [
+			"5,000 Credits Per Month (Dripped)",
+			"Access All Pro Models (Claude, GPT-4)",
+			"Unlimited History Storage",
+			"VIP Priority Support",
+		],
+		button: {
+			label: "Comming Soon...",
+			// label: "Get Annual Pro",
+			size: "lg",
+			disabled: true,
+			// loading: loading.value,
+			// onClick: () => handleUpgrade("annual"),
+		},
+		ui: {
+			featureTitle: "whitespace-normal self-center",
+			featureIcon: "h-6",
+			feature: "items-start",
 		},
 		scale: true,
 	},
 	{
-		title: "Pro Plan",
-		description: "Best suited for small teams.",
-		price: "$5",
+		title: "Semester Monthly",
+		description: "For consistent students.",
+		price: "$9.99",
 		billingCycle: "/month",
 		billingPeriod: "billed monthly",
 		features: [
-			"Everything in Free, plus:",
-			"Unlimited AI Generations",
+			"3,000 Credits Per Month",
+			"Access All Pro Models (Claude, GPT-4)",
 			"Full Generation History",
 			"Priority Support",
+			"Student discount available upto 50%",
 		],
 		button: {
-			label: "Comming Soon",
-			loading: loading.value,
-			variant: "subtle",
-			onClick: () => handleUpgrade("pro-montly"),
+			label: "Comming Soon...",
+			// label: "Subscribe Monthly",
+			disabled: true,
+			// loading: loading.value,
+			// onClick: () => handleUpgrade("monthly"),
+		},
+		ui: {
+			featureTitle: "whitespace-normal self-center",
+			featureIcon: "h-6",
+			feature: "items-start",
 		},
 	},
 ]);
@@ -250,8 +294,17 @@ const roadmap = [
 
 		<USeparator />
 
-		<UPageSection :ui="{ container: 'min-h-[75dvh] content-center' }">
+		<UPageSection
+			id="pricing"
+			title="Pricing plan"
+			description="(Mail your details to me at rohankoshyjacob@gmail.com to get discount code.)"
+			:ui="{ container: 'min-h-[75dvh] content-center' }">
 			<UPricingPlans :plans="plans" scale compact />
+			<div
+				class="text-muted text-sm text-center underline decoration-primary/70">
+				Note: All plans are disabled for now until we have an active
+				userbase
+			</div>
 		</UPageSection>
 
 		<USeparator />

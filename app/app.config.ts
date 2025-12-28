@@ -6,6 +6,9 @@ export default defineAppConfig({
 			close: "hugeicons:cancel-01",
 		},
 		button: {
+			slots: {
+				base: ["not-disabled:active:scale-95 transition-transform"],
+			},
 			compoundVariants: [
 				{
 					color: "primary",
